@@ -10,7 +10,8 @@ public class GreetingServer {
         System.out.println("Hello gRPC");
 
         Server server = ServerBuilder.forPort(50051)
-                .addService(new GreetServiceImpl()) //Reference class we just built
+//                .addService(new GreetServiceImpl()) //Reference class we just built
+                .addService(new SumServiceImpl()) //Reference class we just built
                 .build();
 
         server.start();
