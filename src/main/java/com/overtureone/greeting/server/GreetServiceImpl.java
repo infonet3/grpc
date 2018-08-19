@@ -1,9 +1,6 @@
 package com.overtureone.greeting.server;
 
-import com.overtureone.proto.GreetRequest;
-import com.overtureone.proto.GreetResponse;
-import com.overtureone.proto.GreetServiceGrpc;
-import com.overtureone.proto.Greeting;
+import com.overtureone.proto.*;
 import io.grpc.stub.StreamObserver;
 
 public class GreetServiceImpl extends GreetServiceGrpc.GreetServiceImplBase {
@@ -28,4 +25,33 @@ public class GreetServiceImpl extends GreetServiceGrpc.GreetServiceImplBase {
         responseObserver.onCompleted();
     }
 
+    @Override
+    public void greetManyTimes(GreetManyTimesRequest request, StreamObserver<GreetManyTimesResponse> responseObserver) {
+
+        String firstName = request.getGreeting().getFirstName();
+        String lastName = request.getGreeting().getLastName();
+
+        try {
+
+            for (int i = 0; i < 10; i++) {
+                String result = "Hello " + firstName + ", " + lastName + ", response number: " + i;
+                GreetManyTimesResponse response = GreetManyTimesResponse.newBuilder()
+                        .setResult(result)
+                        .build();
+
+                responseObserver.onNext(response);
+                Thread.sleep(1000);
+            }
+
+        } catch (Exception exc) {
+
+            exc.printStackTrace();
+
+        } finally {
+
+            responseObserver.onCompleted();
+
+        }
+
+    }
 }

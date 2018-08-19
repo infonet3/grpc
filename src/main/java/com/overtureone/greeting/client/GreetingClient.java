@@ -1,14 +1,7 @@
 package com.overtureone.greeting.client;
 
-import com.overtureone.proto.SumRequest;
-import com.overtureone.proto.SumResponse;
-import com.overtureone.proto.SumServiceGrpc;
-import com.overtureone.proto.Arguments;
+import com.overtureone.proto.*;
 
-import com.overtureone.proto.GreetRequest;
-import com.overtureone.proto.GreetResponse;
-import com.overtureone.proto.GreetServiceGrpc;
-import com.overtureone.proto.Greeting;
 import com.proto.dummy.DummyServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -42,6 +35,7 @@ public class GreetingClient {
         System.out.println(greetResponse.getResult());
         */
 
+        /*
         SumServiceGrpc.SumServiceBlockingStub sumClient = SumServiceGrpc.newBlockingStub(channel);
 
         Arguments args = Arguments.newBuilder()
@@ -57,6 +51,19 @@ public class GreetingClient {
 
         //GreetResponse greetResponse = greetClient.greet(greetRequest);
         System.out.println(sumResponse.getResult());
+        */
+
+        //Server Streaming---------------------------------------------------------------------------------------------
+        GreetServiceGrpc.GreetServiceBlockingStub greetClient = GreetServiceGrpc.newBlockingStub(channel);
+
+        GreetManyTimesRequest greetManyTimesRequest = GreetManyTimesRequest.newBuilder()
+                .setGreeting(Greeting.newBuilder().setFirstName("Matt").setLastName("Jones"))
+                .build();
+
+        greetClient.greetManyTimes(greetManyTimesRequest)
+                .forEachRemaining(greetManyTimesResponse -> {
+                    System.out.println(greetManyTimesResponse.getResult());
+                });
 
 
 
