@@ -5,37 +5,84 @@ import com.overtureone.proto.*;
 import com.proto.dummy.DummyServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.stub.StreamObserver;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class GreetingClient {
-    public static void main(String[] mainArgs) {
-        System.out.println("Hello I'm a gRPC Client");
 
+    ManagedChannel channel;
+
+    public void run() {
         ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50051)
                 .usePlaintext()
                 .build();
 
-        System.out.println("Create Stub");
-        //DummyServiceGrpc.DummyServiceBlockingStub syncClient = DummyServiceGrpc.newBlockingStub(channel);
-        //DummyServiceGrpc.DummyServiceFutureStub asyncClient = DummyServiceGrpc.newFutureStub(channel);
+        //doUnaryCall(channel);
+        //doSumCall(channel);
+        //doServerStreamingCall(channel);
+        doClientStreamingCall(channel);
 
-        //FOR GREET SERVICE
-        /*
-        GreetServiceGrpc.GreetServiceBlockingStub greetClient = GreetServiceGrpc.newBlockingStub(channel);
+        System.out.println("Shutdown");
+        channel.shutdown();
 
-        Greeting greeting = Greeting.newBuilder()
-                .setFirstName("Matt")
-                .setLastName("Jones")
-                .build();
+    }
 
-        GreetRequest greetRequest = GreetRequest.newBuilder()
-                .setGreeting(greeting)
-                .build();
+    private void doClientStreamingCall(ManagedChannel channel) {
 
-        GreetResponse greetResponse = greetClient.greet(greetRequest);
-        System.out.println(greetResponse.getResult());
-        */
+        GreetServiceGrpc.GreetServiceStub asyncClient = GreetServiceGrpc.newStub(channel);
 
-        /*
+        CountDownLatch latch = new CountDownLatch(1);
+
+        StreamObserver<LongGreetRequest> requestObserver = asyncClient.longGreet(new StreamObserver<LongGreetResponse>() {
+            @Override
+            public void onNext(LongGreetResponse value) {
+                //Response from the server
+                System.out.println("Received a response from the server");
+                System.out.println(value.getResult());
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                //Error from the server
+            }
+
+            @Override
+            public void onCompleted() {
+                //Server is done sending data
+                System.out.println("Server has completed sending us somethings");
+                latch.countDown();
+            }
+        });
+
+        requestObserver.onNext(LongGreetRequest.newBuilder()
+                .setGreeting(Greeting.newBuilder()
+                    .setFirstName("Geronimo")
+                    .setLastName("IsHome")
+                    .build())
+                .build());
+
+        requestObserver.onNext(LongGreetRequest.newBuilder()
+                .setGreeting(Greeting.newBuilder()
+                        .setFirstName("Carter")
+                        .setLastName("Jones")
+                        .build())
+                .build());
+
+        //Tell the server the client is done sending data
+        requestObserver.onCompleted();
+
+        //Use the latch to stay in the function
+        try {
+            latch.await(3, TimeUnit.SECONDS);
+        } catch(Exception exc) {
+            exc.printStackTrace();
+        }
+    }
+
+    private void doSumCall(ManagedChannel channel) {
+
         SumServiceGrpc.SumServiceBlockingStub sumClient = SumServiceGrpc.newBlockingStub(channel);
 
         Arguments args = Arguments.newBuilder()
@@ -51,9 +98,29 @@ public class GreetingClient {
 
         //GreetResponse greetResponse = greetClient.greet(greetRequest);
         System.out.println(sumResponse.getResult());
-        */
 
-        //Server Streaming---------------------------------------------------------------------------------------------
+    }
+
+    private void doUnaryCall(ManagedChannel channel) {
+
+        GreetServiceGrpc.GreetServiceBlockingStub greetClient = GreetServiceGrpc.newBlockingStub(channel);
+
+        Greeting greeting = Greeting.newBuilder()
+                .setFirstName("Matt")
+                .setLastName("Jones")
+                .build();
+
+        GreetRequest greetRequest = GreetRequest.newBuilder()
+                .setGreeting(greeting)
+                .build();
+
+        GreetResponse greetResponse = greetClient.greet(greetRequest);
+        System.out.println(greetResponse.getResult());
+
+    }
+
+    private void doServerStreamingCall(ManagedChannel channel) {
+
         GreetServiceGrpc.GreetServiceBlockingStub greetClient = GreetServiceGrpc.newBlockingStub(channel);
 
         GreetManyTimesRequest greetManyTimesRequest = GreetManyTimesRequest.newBuilder()
@@ -65,10 +132,13 @@ public class GreetingClient {
                     System.out.println(greetManyTimesResponse.getResult());
                 });
 
+    }
 
+    public static void main(String[] mainArgs) {
+        System.out.println("Hello I'm a gRPC Client");
 
-        System.out.println("Shutdown");
-        channel.shutdown();
+        GreetingClient main = new GreetingClient();
+        main.run();
 
     }
 }
