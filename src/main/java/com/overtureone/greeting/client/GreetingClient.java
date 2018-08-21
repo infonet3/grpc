@@ -2,7 +2,6 @@ package com.overtureone.greeting.client;
 
 import com.overtureone.proto.*;
 
-import com.proto.dummy.DummyServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
@@ -20,7 +19,6 @@ public class GreetingClient {
                 .build();
 
         //doUnaryCall(channel);
-        //doSumCall(channel);
         //doServerStreamingCall(channel);
         doClientStreamingCall(channel);
 
@@ -79,26 +77,6 @@ public class GreetingClient {
         } catch(Exception exc) {
             exc.printStackTrace();
         }
-    }
-
-    private void doSumCall(ManagedChannel channel) {
-
-        SumServiceGrpc.SumServiceBlockingStub sumClient = SumServiceGrpc.newBlockingStub(channel);
-
-        Arguments args = Arguments.newBuilder()
-                .setNum1(10)
-                .setNum2(110)
-                .build();
-
-        SumRequest sumRequest = SumRequest.newBuilder()
-                .setArgs(args)
-                .build();
-
-        SumResponse sumResponse = sumClient.sum(sumRequest);
-
-        //GreetResponse greetResponse = greetClient.greet(greetRequest);
-        System.out.println(sumResponse.getResult());
-
     }
 
     private void doUnaryCall(ManagedChannel channel) {
