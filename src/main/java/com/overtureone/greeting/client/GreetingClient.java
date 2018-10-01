@@ -1,17 +1,14 @@
 package com.overtureone.greeting.client;
 
 import com.overtureone.proto.*;
-
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.Arrays;
 
 public class GreetingClient {
-
-    ManagedChannel channel;
 
     public void run() {
         ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50051)
@@ -20,11 +17,52 @@ public class GreetingClient {
 
         //doUnaryCall(channel);
         //doServerStreamingCall(channel);
-        doClientStreamingCall(channel);
+        //doClientStreamingCall(channel);
+        doBiDiStreamingCall(channel);
 
         System.out.println("Shutdown");
         channel.shutdown();
 
+    }
+
+    private void doBiDiStreamingCall(ManagedChannel channel) {
+
+        GreetServiceGrpc.GreetServiceStub asyncClient = GreetServiceGrpc.newStub(channel);
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        StreamObserver<GreetEveryoneRequest> requestObserver = asyncClient.greetEveryone(new StreamObserver<GreetEveryoneResponse>() {
+            @Override
+            public void onNext(GreetEveryoneResponse value) {
+                System.out.println("Response from server: " + value.getResult());
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onCompleted() {
+                System.out.println("Server is done sending data");
+                latch.countDown();
+            }
+
+        });
+
+        Arrays.asList("Stephane", "John", "Marc", "Matt").forEach(name -> {
+            System.out.println("Sending: " + name);
+            requestObserver.onNext(GreetEveryoneRequest.newBuilder().setGreeting(Greeting.newBuilder().setFirstName(name)).build());});
+
+        requestObserver.onCompleted();
+
+
+        //Use the latch to stay in the function
+        try {
+            latch.await(3, TimeUnit.SECONDS);
+        } catch(Exception exc) {
+            exc.printStackTrace();
+        }
     }
 
     private void doClientStreamingCall(ManagedChannel channel) {
