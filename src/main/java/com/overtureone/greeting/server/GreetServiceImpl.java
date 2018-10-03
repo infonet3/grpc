@@ -1,9 +1,42 @@
 package com.overtureone.greeting.server;
 
 import com.overtureone.proto.*;
+import io.grpc.Context;
+import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 
 public class GreetServiceImpl extends GreetServiceGrpc.GreetServiceImplBase {
+
+    @Override
+    public void greetWithDeadline(GreetWithDeadlineRequest request, StreamObserver<GreetWithDeadlineResponse> responseObserver) {
+
+        Context current = Context.current();
+
+        try {
+
+            for (int i = 0; i < 3; i++) {
+                if (!current.isCancelled()) {
+                    System.out.println("Sleep");
+                    Thread.sleep(100);
+                } else {
+                    return;
+                }
+            }
+
+            System.out.println("Send Response");
+            responseObserver.onNext(
+                    GreetWithDeadlineResponse.newBuilder()
+                            .setResult("hello " + request.getGreeting().getFirstName())
+                            .build());
+
+            responseObserver.onCompleted();
+
+        } catch (Exception exc) {
+            exc.printStackTrace();
+        }
+
+
+    }
 
     @Override
     public void greet(GreetRequest request, StreamObserver<GreetResponse> responseObserver) {

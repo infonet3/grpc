@@ -11,7 +11,7 @@ public class GreetingServer {
 
         Server server = ServerBuilder.forPort(50051)
                 .addService(new GreetServiceImpl()) //Reference class we just built
-                //.addService(new SumServiceImpl()) //Reference class we just built
+                //.addService(new CalculatorServiceImpl()) //Reference class we just built
                 .build();
 
         server.start();

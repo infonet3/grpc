@@ -42,6 +42,23 @@ message GreetEveryoneResponse {
     string result = 1;
 }
 
+message SquareRootRequest {
+    int32 number = 1;
+}
+
+message SquareRootResponse {
+    double number_root = 1;
+}
+
+message GreetWithDeadlineResponse {
+    string result = 1;
+}
+
+message GreetWithDeadlineRequest {
+    Greeting greeting = 1;
+}
+
+
 service GreetService {
     //Unary
     rpc Greet(GreetRequest) returns (GreetResponse) {};
@@ -54,4 +71,14 @@ service GreetService {
 
     //Bidirectional Streaming
     rpc GreetEveryone(stream GreetEveryoneRequest) returns (stream GreetEveryoneResponse) {};
+
+    //RPC with Deadline - complete in no less than 300ms
+    rpc GreetWithDeadline(GreetWithDeadlineRequest) returns (GreetWithDeadlineResponse) {};
+}
+
+service CalculatorService {
+
+    //error handling, throw exception if sent number is negative
+    rpc SquareRoot(SquareRootRequest) returns (SquareRootResponse) {};
+
 }

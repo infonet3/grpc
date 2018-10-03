@@ -1,8 +1,7 @@
 package com.overtureone.greeting.client;
 
 import com.overtureone.proto.*;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
+import io.grpc.*;
 import io.grpc.stub.StreamObserver;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -18,11 +17,52 @@ public class GreetingClient {
         //doUnaryCall(channel);
         //doServerStreamingCall(channel);
         //doClientStreamingCall(channel);
-        doBiDiStreamingCall(channel);
+        //doBiDiStreamingCall(channel);
+        //doErrorCall(channel);
+        doUnaryCallWithDeadline(channel);
+
 
         System.out.println("Shutdown");
         channel.shutdown();
 
+    }
+
+    private void doUnaryCallWithDeadline(ManagedChannel channel) {
+        GreetServiceGrpc.GreetServiceBlockingStub blockingStub =
+                GreetServiceGrpc.newBlockingStub(channel);
+
+        try {
+            //3000ms dealine
+            System.out.println("Sending request with Deadline");
+            GreetWithDeadlineResponse response =
+            blockingStub.withDeadline(Deadline.after(10000, TimeUnit.MILLISECONDS))
+                    .greetWithDeadline(GreetWithDeadlineRequest.newBuilder().setGreeting(Greeting.newBuilder().setFirstName("Hi Carter Jones")).build());
+            System.out.println(response.getResult());
+        } catch (StatusRuntimeException e) {
+            if (e.getStatus() == Status.DEADLINE_EXCEEDED) {
+                System.out.println("Deadline Exceeded");
+            } else {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    private void doErrorCall(ManagedChannel channel) {
+        CalculatorServiceGrpc.CalculatorServiceBlockingStub blockingStub =
+               CalculatorServiceGrpc.newBlockingStub(channel);
+
+        int number = 10;
+
+        try {
+
+            SquareRootResponse response = blockingStub.squareRoot(SquareRootRequest.newBuilder().setNumber(number).build());
+            System.out.println("Square Root Num: " + response.getNumberRoot());
+
+        } catch (Exception exc) {
+            System.out.println("Square root exception");
+            exc.printStackTrace();
+        }
     }
 
     private void doBiDiStreamingCall(ManagedChannel channel) {
